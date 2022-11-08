@@ -1,0 +1,20 @@
+name: 'build-test'
+
+on:
+  workflow_dispatch:
+  
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./
+        with:
+          TENANT_ID: "Enter tenant id"
+          TENANT_NAME: "Enter tenant name"
+          CLIENT_ID: "Enter client id"
+          SITE_URL: "Enter site url"

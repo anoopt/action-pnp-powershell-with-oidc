@@ -1,0 +1,25 @@
+name: 'PnP PowerShell with OIDC'
+description: 'Connect to a SharePoint site with Connect-PnPOnline using OIDC and execute supplied script'
+author: 'anoopt'
+inputs:
+  TENANT_ID:
+    required: true
+    description: 'ID of the tenant'
+  TENANT_NAME:
+    required: true
+    description: 'Name of the tenant'
+  CLIENT_ID:
+    required: true
+    description: 'ID of the AAD application registration'
+  SITE_URL:
+    required: true
+    description: 'URL of the site to connect to'
+  AUDIENCE:
+    required: false
+    description: 'The audience for the federated token (default is api://AzureADTokenExchange)'
+  PNP_POWERSHELL_SCRIPT:
+    required: false
+    description: 'The PnP PowerShell script to execute after connecting'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
