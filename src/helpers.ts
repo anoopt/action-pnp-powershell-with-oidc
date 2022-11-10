@@ -33,6 +33,11 @@ export const getAccessToken = async (): Promise<string | null> => {
         const clientId: string = core.getInput("CLIENT_ID", { required: true });
         let audience: string = core.getInput('AUDIENCE', { required: false });
 
+        // mask the client id, tenant id and tenant name
+        core.setSecret(tenantId);
+        core.setSecret(tenantName);
+        core.setSecret(clientId);
+
         core.info("ℹ️ Getting federated token...");
 
         //if audience is not provided, use the api://AzureADTokenExchange as the audience

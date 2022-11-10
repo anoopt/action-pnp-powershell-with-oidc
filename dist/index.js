@@ -6305,6 +6305,10 @@ const getAccessToken = () => __awaiter(void 0, void 0, void 0, function* () {
         const tenantName = core.getInput("TENANT_NAME", { required: true });
         const clientId = core.getInput("CLIENT_ID", { required: true });
         let audience = core.getInput('AUDIENCE', { required: false });
+        // mask the client id, tenant id and tenant name
+        core.setSecret(tenantId);
+        core.setSecret(tenantName);
+        core.setSecret(clientId);
         core.info("ℹ️ Getting federated token...");
         //if audience is not provided, use the api://AzureADTokenExchange as the audience
         if (!audience) {
