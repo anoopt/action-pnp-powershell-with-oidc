@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import { exec } from '@actions/exec';
-import { createScriptFile, deleteFile, composeScript } from './helpers';
+import { createScriptFile, deleteFile, getAccessToken, composeScript } from './helpers';
 
 async function main() {
 
@@ -10,8 +10,17 @@ async function main() {
 
         core.info("ℹ️ Running initial tasks...");
 
+        const accessToken: string | null = await getAccessToken();
+
+        if (!accessToken) {
+            core.setFailed("❌ Failed to get access token");
+            return;
+        }
+
+        core.info("ℹ️ Composing script...");
+        
         // compose the script
-        const script: string = await composeScript();
+        const script: string = await composeScript(accessToken);
 
         core.info("ℹ️ Creating script file...");
 

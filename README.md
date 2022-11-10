@@ -8,7 +8,7 @@ In this action, there is no client secret needed to authenticate to a site. This
 ## Usage
 ```yaml
 name: PnP PowerShell with OIDC
-uses: anoopt/action-pnp-powershell-with-oidc@v1.0.0
+uses: anoopt/action-pnp-powershell-with-oidc@v1.1.0
 with:
     TENANT_ID: ${{ secrets.tenantId }}
     TENANT_NAME: ${{ secrets.tenantName }}
