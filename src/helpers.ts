@@ -4,7 +4,7 @@ import { tmpdir } from 'os';
 import { chmodSync, writeFileSync, existsSync, unlinkSync } from 'fs';
 import axios from 'axios';
 
-export const createScriptFile = async (inlineScript: string, powershell: boolean): Promise<string> => {
+const createScriptFile = async (inlineScript: string, powershell: boolean): Promise<string> => {
     const TEMP_DIRECTORY: string = process.env.RUNNER_TEMP || tmpdir();
     const fileExtension: string = powershell ? "ps1" : "sh";
     const fileName: string = `PNP_PS_CONNECT_GITHUB_ACTION_${new Date().getTime().toString()}.${fileExtension}`;
@@ -14,7 +14,7 @@ export const createScriptFile = async (inlineScript: string, powershell: boolean
     return filePath;
 }
 
-export const deleteFile = async (filePath: string) => {
+const deleteFile = async (filePath: string) => {
     if (existsSync(filePath)) {
         try {
             unlinkSync(filePath);
@@ -25,39 +25,37 @@ export const deleteFile = async (filePath: string) => {
     }
 }
 
-export const getAccessToken = async (): Promise<string | null> => {
+const getParams = async (federatedToken: string): Promise<URLSearchParams> => {
+
+    let { tenantName, clientId } = await import('./inputs');
+
+    var params = new URLSearchParams();
+    params.append('grant_type', 'client_credentials');
+    params.append('client_id', clientId);
+    params.append('client_assertion_type', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
+    params.append('client_assertion', federatedToken);
+    params.append('scope', `https://${tenantName}.sharepoint.com/.default`);
+    return params;
+}
+
+const getAccessToken = async (): Promise<string | null> => {
     try {
 
-        const tenantId: string = core.getInput("TENANT_ID", { required: true });
-        const tenantName: string = core.getInput("TENANT_NAME", { required: true });
-        const clientId: string = core.getInput("CLIENT_ID", { required: true });
-        let audience: string = core.getInput('AUDIENCE', { required: false });
-
-        // mask the client id, tenant id and tenant name
-        core.setSecret(tenantId);
-        core.setSecret(tenantName);
-        core.setSecret(clientId);
+        let { tenantId, audience } = await import('./inputs');
 
         core.info("ℹ️ Getting federated token...");
+        let federatedToken: string = await core.getIDToken(audience);
 
-        //if audience is not provided, use the api://AzureADTokenExchange as the audience
-        if (!audience) {
-            core.info("ℹ️ Audience not provided, using default value: api://AzureADTokenExchange");
-            audience = "api://AzureADTokenExchange";
+        //if federated token is empty then core.setFailed
+        if (!federatedToken) {
+            core.setFailed("❌ Failed to get federated token");
+            return null;
         }
 
-        let federatedToken = await core.getIDToken(audience);
-
         core.info("ℹ️ Getting access token...");
-
-        var params = new URLSearchParams();
-        params.append('grant_type', 'client_credentials');
-        params.append('client_id', clientId);
-        params.append('client_assertion_type', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
-        params.append('client_assertion', federatedToken);
-        params.append('scope', `https://${tenantName}.sharepoint.com/.default`);
-
         const requestTokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+
+        const params = await getParams(federatedToken);
 
         const headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -77,9 +75,9 @@ export const getAccessToken = async (): Promise<string | null> => {
     }
 }
 
-export const composeScript = async (accessToken: string): Promise<string> => {
-    const siteUrl: string = core.getInput("SITE_URL", { required: true });
-    let pnpPowerShellScript: string = core.getInput('PNP_POWERSHELL_SCRIPT', { required: false });
+const composeScript = async (accessToken: string): Promise<string> => {
+
+    let { siteUrl, pnpPowerShellScript } = await import('./inputs');
 
     // connect to the tenant and run script
     const script =
@@ -95,3 +93,5 @@ export const composeScript = async (accessToken: string): Promise<string> => {
         `;
     return script;
 }
+
+export { createScriptFile, deleteFile, getAccessToken, composeScript };

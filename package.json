@@ -1,6 +1,6 @@
 {
     "name": "action-pnp-powershell-with-oidc",
-    "version": "1.0.0",
+    "version": "1.2.0",
     "description": "This Action connects to the specified site using Connect-PnPOnline and then executes the specified PnP PowerShell script.",
     "main": "dist/index.js",
     "scripts": {

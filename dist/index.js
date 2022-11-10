@@ -6299,31 +6299,29 @@ const deleteFile = (filePath) => __awaiter(void 0, void 0, void 0, function* () 
     }
 });
 exports.deleteFile = deleteFile;
+const getParams = (federatedToken) => __awaiter(void 0, void 0, void 0, function* () {
+    let { tenantName, clientId } = yield Promise.resolve().then(() => __importStar(__nccwpck_require__(7063)));
+    var params = new URLSearchParams();
+    params.append('grant_type', 'client_credentials');
+    params.append('client_id', clientId);
+    params.append('client_assertion_type', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
+    params.append('client_assertion', federatedToken);
+    params.append('scope', `https://${tenantName}.sharepoint.com/.default`);
+    return params;
+});
 const getAccessToken = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const tenantId = core.getInput("TENANT_ID", { required: true });
-        const tenantName = core.getInput("TENANT_NAME", { required: true });
-        const clientId = core.getInput("CLIENT_ID", { required: true });
-        let audience = core.getInput('AUDIENCE', { required: false });
-        // mask the client id, tenant id and tenant name
-        core.setSecret(tenantId);
-        core.setSecret(tenantName);
-        core.setSecret(clientId);
+        let { tenantId, audience } = yield Promise.resolve().then(() => __importStar(__nccwpck_require__(7063)));
         core.info("ℹ️ Getting federated token...");
-        //if audience is not provided, use the api://AzureADTokenExchange as the audience
-        if (!audience) {
-            core.info("ℹ️ Audience not provided, using default value: api://AzureADTokenExchange");
-            audience = "api://AzureADTokenExchange";
-        }
         let federatedToken = yield core.getIDToken(audience);
+        //if federated token is empty then core.setFailed
+        if (!federatedToken) {
+            core.setFailed("❌ Failed to get federated token");
+            return null;
+        }
         core.info("ℹ️ Getting access token...");
-        var params = new URLSearchParams();
-        params.append('grant_type', 'client_credentials');
-        params.append('client_id', clientId);
-        params.append('client_assertion_type', 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer');
-        params.append('client_assertion', federatedToken);
-        params.append('scope', `https://${tenantName}.sharepoint.com/.default`);
         const requestTokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+        const params = yield getParams(federatedToken);
         const headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         };
@@ -6340,8 +6338,7 @@ const getAccessToken = () => __awaiter(void 0, void 0, void 0, function* () {
 });
 exports.getAccessToken = getAccessToken;
 const composeScript = (accessToken) => __awaiter(void 0, void 0, void 0, function* () {
-    const siteUrl = core.getInput("SITE_URL", { required: true });
-    let pnpPowerShellScript = core.getInput('PNP_POWERSHELL_SCRIPT', { required: false });
+    let { siteUrl, pnpPowerShellScript } = yield Promise.resolve().then(() => __importStar(__nccwpck_require__(7063)));
     // connect to the tenant and run script
     const script = `   
             $ErrorActionPreference = "Stop"
@@ -6356,6 +6353,60 @@ const composeScript = (accessToken) => __awaiter(void 0, void 0, void 0, functio
     return script;
 });
 exports.composeScript = composeScript;
+
+
+/***/ }),
+
+/***/ 7063:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.pnpPowerShellScript = exports.siteUrl = exports.audience = exports.clientId = exports.tenantName = exports.tenantId = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const tenantId = core.getInput('TENANT_ID', { required: true });
+exports.tenantId = tenantId;
+core.setSecret(tenantId);
+const tenantName = core.getInput("TENANT_NAME", { required: true });
+exports.tenantName = tenantName;
+const clientId = core.getInput("CLIENT_ID", { required: true });
+exports.clientId = clientId;
+core.setSecret(clientId);
+let audience = core.getInput('AUDIENCE', { required: false });
+exports.audience = audience;
+//if audience is not provided, use the api://AzureADTokenExchange as the audience
+if (!audience) {
+    core.info("ℹ️ Audience not provided, using default value: api://AzureADTokenExchange");
+    exports.audience = audience = "api://AzureADTokenExchange";
+}
+const siteUrl = core.getInput("SITE_URL", { required: true });
+exports.siteUrl = siteUrl;
+let pnpPowerShellScript = core.getInput('PNP_POWERSHELL_SCRIPT', { required: false });
+exports.pnpPowerShellScript = pnpPowerShellScript;
 
 
 /***/ }),
